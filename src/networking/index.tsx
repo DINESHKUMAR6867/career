@@ -49,6 +49,8 @@ const NetworkingPage: React.FC = () => {
         <Dropdown
           options={["I want an interview", "I want industry connections", "I’m just expanding my network", "I want to send a follow up message"]}
           onSelect={handleGoalChange}
+          selected={selectedGoal}  // Pass the selected goal here
+
         />
       </div>
 
