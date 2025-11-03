@@ -31,50 +31,49 @@ const Step1: React.FC = () => {
     if (savedDescription) setJobDescription(savedDescription);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!jobTitle.trim() || !jobDescription.trim()) {
-      alert('Please fill in all required fields.');
-      return;
-    }
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    // ✅ get logged-in user id
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      alert('Please sign in again.');
-      return;
-    }
+  if (!jobTitle.trim() || !jobDescription.trim()) {
+    alert('Please fill in all required fields.');
+    return;
+  }
 
-    // ✅ insert new job request
-    const { data, error } = await supabase
-      .from('job_requests')
-      .insert([
-        {
-          user_id: user.id,
-          job_title: jobTitle,
-          job_description: jobDescription,
-          status: 'draft',
-        },
-      ])
-      .select('id')
-      .single();
+  // Directly use the user from the context
+  if (!user) {
+    alert('Please sign in again.');
+    return;
+  }
 
-    if (error) {
-      console.error('❌ Error creating job request:', error.message);
-      alert('Failed to save job details.');
-      return;
-    }
+  // ✅ insert new job request
+  const { data, error } = await supabase
+    .from('job_requests')
+    .insert([
+      {
+        user_id: user.id,
+        job_title: jobTitle,
+        job_description: jobDescription,
+        status: 'draft',
+      },
+    ])
+    .select('id')
+    .single();
 
-    // ✅ store job info + id locally for next steps
-    localStorage.setItem('careerCast_jobTitle', jobTitle);
-    localStorage.setItem('careerCast_jobDescription', jobDescription);
-    localStorage.setItem('current_job_request_id', data.id);
+  if (error) {
+    console.error('❌ Error creating job request:', error.message);
+    alert('Failed to save job details.');
+    return;
+  }
 
-    alert('Job details saved!');
-    navigate('/step2');
-  };
+  // ✅ store job info + id locally for next steps
+  localStorage.setItem('careerCast_jobTitle', jobTitle);
+  localStorage.setItem('careerCast_jobDescription', jobDescription);
+  localStorage.setItem('current_job_request_id', data.id);
+
+  alert('Job details saved!');
+  navigate('/step2');
+};
+
 
   return (
     <div className="min-h-screen bg-white flex">
