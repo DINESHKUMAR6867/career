@@ -110,7 +110,8 @@ export default function Password() {
         });
         
         if (error) throw error;
-        
+
+        alert("🎉Password updated successfully...")
         setSuccess('Password updated successfully');
         // Reset form
         setFormData({
