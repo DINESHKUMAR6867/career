@@ -733,7 +733,7 @@ const FinalResult: React.FC = () => {
       // Position at Top-Right corner
       const buttonWidth = 120;
       const buttonHeight = 40;
-      const margin = 30;
+      const margin = 10;
       const x = width - buttonWidth - margin;
       const y = height - buttonHeight - margin;
 
