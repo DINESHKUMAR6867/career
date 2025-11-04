@@ -12,7 +12,8 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  Briefcase
+  Briefcase,
+  Globe
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -67,7 +68,7 @@ export default function Sidebar({ userEmail, onLogout }: SidebarProps) {
               : 'text-white/90 hover:bg-white/10'
           }`}
         >
-          <BookOpen className="w-5 h-5" />
+          <Globe className="w-5 h-5" />
           Network
         </button>
 
