@@ -11,6 +11,7 @@
     "start": "npm run build && node server.js"
   },
   "dependencies": {
+    "@paypal/react-paypal-js": "^8.9.2",
     "@pdf-lib/fontkit": "^1.1.1",
     "@supabase/supabase-js": "^2.76.1",
     "@vercel/node": "^2.10.3",

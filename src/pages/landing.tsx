@@ -181,7 +181,8 @@ export default function Landing() {
         <Button
           className="bg-gradient-to-r from-[#0B4F6C] to-[#159A9C] text-white font-semibold hover:shadow-lg hover:scale-105 transition-all px-5 py-2"
           onClick={() =>
-            navigate(isAuthenticated ? "/dashboard" : "/auth")
+            // navigate(isAuthenticated ? "/dashboard" : "/auth")
+            navigate("/auth")
           }
         >
           {isAuthenticated ? "Dashboard" : "Get Started"}
