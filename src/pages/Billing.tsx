@@ -440,12 +440,7 @@ export default function Billing() {
                                     disabled={!user || !FUNCTIONS_URL || !SUPABASE_ANON_KEY}
                                     createOrder={async () => {
   if (!user) throw new Error('Not signed in');
-  if (!FUNCTIONS_URL) throw new Error('Functions URL missing');
-  if (!SUPABASE_ANON_KEY) throw new Error('Missing anon key');
-
-  // amount should be taken from UI (state) — e.g. selectedPlanAmount
-  const amountToCharge = 9.0; // replace with dynamic state you use in UI
-
+  const amountToCharge = 9.0; // Fixed amount for premium plan
   const { data: { session } = {} as any } = await supabase.auth.getSession();
   const accessToken = session?.access_token || '';
 
@@ -454,7 +449,7 @@ export default function Billing() {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'apikey': SUPABASE_ANON_KEY,
+      ...(SUPABASE_ANON_KEY ? { 'apikey': SUPABASE_ANON_KEY } : {}),
       ...(accessToken ? { 'X-User-Token': accessToken } : {}),
     },
     body: JSON.stringify({
@@ -484,6 +479,12 @@ export default function Billing() {
 // inside PayPalButtons props
 onApprove={async (data, actions) => {
   // return the promise so PayPal knows when client work is done
+  // Check if actions.order exists before calling capture
+  if (!actions.order) {
+    console.error('PayPal actions.order is undefined');
+    throw new Error('PayPal order action is not available');
+  }
+  
   return actions.order.capture().then(async (captureResult: any) => {
     try {
       const captureId =
@@ -499,8 +500,8 @@ onApprove={async (data, actions) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            apikey: SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            ...(SUPABASE_ANON_KEY ? { 'apikey': SUPABASE_ANON_KEY } : {}),
           },
           body: JSON.stringify({
             paymentId,
@@ -545,7 +546,7 @@ onApprove={async (data, actions) => {
                                     }}
                                     createOrder={async () => {
   if (!user) throw new Error('Not signed in');
-  const amountToCharge = selectedAmount ?? 9.0; // <-- use your UI state here
+  const amountToCharge = 9.0; // Fixed price for premium plan
   const { data: { session } = {} as any } = await supabase.auth.getSession();
   const accessToken = session?.access_token || '';
 
@@ -554,7 +555,7 @@ onApprove={async (data, actions) => {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'apikey': SUPABASE_ANON_KEY,
+      ...(SUPABASE_ANON_KEY ? { 'apikey': SUPABASE_ANON_KEY } : {}),
       ...(accessToken ? { 'X-User-Token': accessToken } : {}),
     },
     body: JSON.stringify({
