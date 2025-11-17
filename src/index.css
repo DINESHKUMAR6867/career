@@ -40,6 +40,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 /* Additional Auth Page Styles */
 .step-card {
   background-color: #ffffff;
@@ -63,101 +64,21 @@ body {
   }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .step-card {
-    padding: 1.5rem !important;
-  }
+/* Toast Styles */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Custom button hover effects */
-.btn-hover-effect:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-/* Dashboard specific styles */
-.dashboard-header {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
 }
 
-.stats-grid {
-  display: grid;
-  gap: 1.5rem;
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-.stat-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.casts-section {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.section-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.casts-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.casts-table th {
-  background: #f8fafc;
-  color: #475569;
-  text-align: left;
-  padding: 1rem 1.5rem;
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.casts-table td {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.casts-table tr:last-child td {
-  border-bottom: none;
-}
-
-.casts-table tr:hover {
-  background: #f8fafc;
-}
-
-.empty-state {
-  padding: 3rem 2rem;
-  text-align: center;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .casts-table {
-    font-size: 0.8rem;
-  }
-  
-  .casts-table th,
-  .casts-table td {
-    padding: 0.75rem 0.5rem;
-  }
+.animate-fadeOut {
+  animation: fadeOut 0.3s ease-in-out;
 }

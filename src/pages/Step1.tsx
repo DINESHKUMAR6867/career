@@ -8,6 +8,7 @@ import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../contexts/AuthContext";
 import Sidebar from '../components/Sidebar';
 import { Menu } from 'lucide-react';
+import { showToast } from "../components/ui/toast";
 
 const Step1: React.FC = () => {
   const navigate = useNavigate();
@@ -35,13 +36,13 @@ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (!jobTitle.trim() || !jobDescription.trim()) {
-    alert('Please fill in all required fields.');
+    showToast('Please fill in all required fields.', 'warning');
     return;
   }
 
   // Directly use the user from the context
   if (!user) {
-    alert('Please sign in again.');
+    showToast('Please sign in again.', 'warning');
     return;
   }
 
@@ -61,7 +62,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   if (error) {
     console.error('❌ Error creating job request:', error.message);
-    alert('Failed to save job details.');
+    showToast('Failed to save job details.', 'error');
     return;
   }
 
@@ -70,7 +71,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   localStorage.setItem('careerCast_jobDescription', jobDescription);
   localStorage.setItem('current_job_request_id', data.id);
 
-  alert('Job details saved!');
+  showToast('Job details saved!', 'success');
   navigate('/step2');
 };
 

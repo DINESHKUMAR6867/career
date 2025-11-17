@@ -208,29 +208,29 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-gray-50">
-          <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl shadow-sm overflow-hidden">
+        <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
             {/* Header */}
-            <div className="border-b border-gray-200 bg-gradient-to-r from-[#0B4F6C] to-[#159A9C] px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center">
+            <div className="border-b border-gray-200 bg-gradient-to-r from-[#0B4F6C] to-[#159A9C] px-4 py-4 sm:px-8 sm:py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white">Your CareerCasts</h2>
-                <p className="text-white/80 text-xs sm:text-sm">
+                <p className="text-white/80 text-xs sm:text-sm mt-1">
                   Track progress and manage your recordings
                 </p>
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
                 {isPremiumActive && planRenewsAt ? (
-<span className="text-white text-xs bg-red-500 px-2 py-1 rounded-md">
+                  <span className="text-white text-xs bg-red-500 px-2 py-1 rounded-md self-start sm:self-auto">
                     Premium active until {new Date(planRenewsAt).toLocaleDateString()}
                   </span>
                 ) : (
-                  <span className="text-white text-xs bg-red-500/30 px-2 py-1 rounded-md">
+                  <span className="text-white text-xs bg-red-500/30 px-2 py-1 rounded-md self-start sm:self-auto">
                     Free Plan (3 recordings)
                   </span>
                 )}
                 <button
                   onClick={handleNewCast}
-                  className="bg-white text-[#0B4F6C] px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-semibold hover:bg-white/90 transition-all shadow-md flex items-center gap-2 text-sm sm:text-base"
+                  className="bg-white text-[#0B4F6C] px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-semibold hover:bg-white/90 transition-all shadow-md flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4" />
                   New CareerCast
@@ -240,30 +240,30 @@ export default function Dashboard() {
 
             {/* Body */}
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <Loader2 className="animate-spin text-[#01796F] h-10 w-10 mb-4" />
-                <p className="text-gray-600">Loading your CareerCasts...</p>
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <Loader2 className="animate-spin text-[#01796F] h-8 w-8 mb-4" />
+                <p className="text-gray-600 text-center">Loading your CareerCasts...</p>
               </div>
             ) : careerCasts.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="bg-[#01796F]/10 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-                  <Video className="h-12 w-12 text-[#01796F]" />
+              <div className="text-center py-16 px-4">
+                <div className="bg-[#01796F]/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                  <Video className="h-10 w-10 text-[#01796F]" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-800 mb-2">No CareerCasts Yet</h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">
                   Create your first professional video resume and make your profile shine.
                 </p>
                 <button
                   onClick={handleNewCast}
-                  className="bg-[#01796F] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#016761]"
+                  className="bg-[#01796F] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#016761] transition-colors shadow-md flex items-center justify-center mx-auto gap-2"
                 >
-                  <Plus className="w-4 h-4 inline mr-2" /> Create CareerCast
+                  <Plus className="w-5 h-5" /> Create CareerCast
                 </button>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-gray-50 text-[#0B4F6C] uppercase tracking-wide font-semibold">
+                  <thead className="bg-gray-50 text-[#0B4F6C] uppercase tracking-wide font-semibold hidden md:table-header-group">
                     <tr>
                       <th className="py-3 px-4">Job Title</th>
                       <th className="py-3 px-4">Resume</th>
@@ -278,58 +278,132 @@ export default function Dashboard() {
                       const video = cast.recordings?.[0]?.storage_path || null;
                       const both = cast.resume_path && video;
                       return (
-                        <tr key={cast.id} className="border-b hover:bg-gray-50">
-                          <td className="py-3 px-4 font-medium">{cast.job_title || 'Untitled'}</td>
-                          <td className="py-3 px-4">
-                            {cast.resume_path ? (
-                              <a
-                                href={cast.resume_path}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-[#01796F] hover:underline flex items-center gap-1"
-                              >
-                                <FileText className="w-4 h-4" /> View
-                              </a>
-                            ) : (
-                              <span className="text-gray-400 text-xs italic">No resume</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4">
-                            {video ? (
-                              <button
-                                onClick={() => setSelectedVideo(video)}
-                                className="text-[#01796F] hover:underline flex items-center gap-1"
-                              >
-                                <Play className="w-4 h-4" /> Play
-                              </button>
-                            ) : (
-                              <span className="text-gray-400 text-xs italic">No video</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4">{getBadge(cast.status)}</td>
-                          <td className="py-3 px-4">{formatDate(cast.created_at)}</td>
-                          <td className="py-3 px-4 text-center">
-                            <div className="flex justify-center gap-2">
-                              <button
-                                onClick={() => both && handleViewDetails(cast.id)}
-                                disabled={!both}
-                                className={`${
-                                  both
-                                    ? 'bg-[#01796F] hover:bg-[#016761] text-white'
-                                    : 'bg-gray-200 text-gray-400'
-                                } px-3 py-1.5 rounded-md font-semibold text-xs`}
-                              >
-                                View
-                              </button>
-                              <button
-                                onClick={() => handleReRecord(cast.id)}
-                                className="border-2 border-[#0B4F6C] text-[#0B4F6C] px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-[#0B4F6C] hover:text-white"
-                              >
-                                Re-record
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                        <>
+                          {/* Desktop view */}
+                          <tr key={cast.id} className="border-b hover:bg-gray-50 hidden md:table-row">
+                            <td className="py-3 px-4 font-medium">{cast.job_title || 'Untitled'}</td>
+                            <td className="py-3 px-4">
+                              {cast.resume_path ? (
+                                <a
+                                  href={cast.resume_path}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[#01796F] hover:underline flex items-center gap-1"
+                                >
+                                  <FileText className="w-4 h-4" /> View
+                                </a>
+                              ) : (
+                                <span className="text-gray-400 text-xs italic">No resume</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              {video ? (
+                                <button
+                                  onClick={() => setSelectedVideo(video)}
+                                  className="text-[#01796F] hover:underline flex items-center gap-1"
+                                >
+                                  <Play className="w-4 h-4" /> Play
+                                </button>
+                              ) : (
+                                <span className="text-gray-400 text-xs italic">No video</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">{getBadge(cast.status)}</td>
+                            <td className="py-3 px-4">{formatDate(cast.created_at)}</td>
+                            <td className="py-3 px-4 text-center">
+                              <div className="flex justify-center gap-2">
+                                <button
+                                  onClick={() => both && handleViewDetails(cast.id)}
+                                  disabled={!both}
+                                  className={`${
+                                    both
+                                      ? 'bg-[#01796F] hover:bg-[#016761] text-white'
+                                      : 'bg-gray-200 text-gray-400'
+                                  } px-3 py-1.5 rounded-md font-semibold text-xs`}
+                                >
+                                  View
+                                </button>
+                                <button
+                                  onClick={() => handleReRecord(cast.id)}
+                                  className="border-2 border-[#0B4F6C] text-[#0B4F6C] px-3 py-1.5 rounded-md font-semibold text-xs hover:bg-[#0B4F6C] hover:text-white"
+                                >
+                                  Re-record
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          
+                          {/* Mobile view */}
+                          <tr key={`mobile-${cast.id}`} className="border-b border-gray-100 hover:bg-gray-50 md:hidden">
+                            <td className="py-4 px-4" colSpan={6}>
+                              <div className="flex flex-col gap-3">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-gray-900 text-base truncate">{cast.job_title || 'Untitled'}</h3>
+                                    <p className="text-xs text-gray-500 mt-1">{formatDate(cast.created_at)}</p>
+                                  </div>
+                                  <div className="flex-shrink-0 ml-2">
+                                    {getBadge(cast.status)}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex gap-3 mt-1">
+                                  {cast.resume_path ? (
+                                    <a
+                                      href={cast.resume_path}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-[#01796F] hover:text-[#016761] flex items-center gap-1 text-xs font-medium"
+                                    >
+                                      <FileText className="w-4 h-4" /> 
+                                      <span>Resume</span>
+                                    </a>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs flex items-center gap-1">
+                                      <FileText className="w-4 h-4" />
+                                      <span>No resume</span>
+                                    </span>
+                                  )}
+                                  
+                                  {video ? (
+                                    <button
+                                      onClick={() => setSelectedVideo(video)}
+                                      className="text-[#01796F] hover:text-[#016761] flex items-center gap-1 text-xs font-medium"
+                                    >
+                                      <Play className="w-4 h-4" />
+                                      <span>Video</span>
+                                    </button>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs flex items-center gap-1">
+                                      <Play className="w-4 h-4" />
+                                      <span>No video</span>
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                <div className="flex gap-2 mt-2">
+                                  <button
+                                    onClick={() => both && handleViewDetails(cast.id)}
+                                    disabled={!both}
+                                    className={`flex-1 ${
+                                      both
+                                        ? 'bg-[#01796F] hover:bg-[#016761] text-white'
+                                        : 'bg-gray-100 text-gray-400'
+                                    } px-3 py-2 rounded-lg font-medium text-sm transition-colors`}
+                                  >
+                                    View Details
+                                  </button>
+                                  <button
+                                    onClick={() => handleReRecord(cast.id)}
+                                    className="flex-1 border border-[#0B4F6C] text-[#0B4F6C] px-3 py-2 rounded-lg font-medium text-sm hover:bg-[#0B4F6C] hover:text-white transition-colors"
+                                  >
+                                    Re-record
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </>
                       );
                     })}
                   </tbody>
@@ -341,31 +415,43 @@ export default function Dashboard() {
 
         {/* Upgrade popup */}
         {!isPremiumActive && showPricingPopup && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-              <div className="bg-gradient-to-r from-[#0B4F6C] to-[#159A9C] p-5 flex justify-between items-center">
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden mx-4">
+              <div className="bg-gradient-to-r from-[#0B4F6C] to-[#159A9C] p-4 sm:p-5 flex justify-between items-center">
                 <h3 className="text-white font-bold text-lg">Upgrade to Premium</h3>
                 <button
                   onClick={handleClosePricingPopup}
-                  className="text-white hover:text-gray-200 text-2xl font-bold"
+                  className="text-white hover:text-gray-200 text-2xl font-bold p-1"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="p-6">
+              <div className="p-5 sm:p-6">
                 <div className="text-center mb-4">
                   <Video className="mx-auto w-10 h-10 text-[#01796F]" />
                   <h4 className="font-bold text-lg mt-2">Unlock Unlimited CareerCasts</h4>
-                  <p className="text-gray-600 text-sm">
-                    You’ve reached your 3 free recordings. Upgrade now for 30 days of unlimited access.
+                  <p className="text-gray-600 text-sm mt-1">
+                    You've reached your 3 free recordings. Upgrade now for 30 days of unlimited access.
                   </p>
                 </div>
-                <div className="bg-[#01796F]/5 rounded-lg p-4 mb-6">
+                <div className="bg-[#01796F]/5 rounded-lg p-4 mb-5">
                   <ul className="text-sm text-gray-700 space-y-2">
-                    <li>✔ Unlimited CareerCasts</li>
-                    <li>✔ HD Video Recording</li>
-                    <li>✔ Advanced Analytics</li>
-                    <li>✔ Priority Support</li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-[#01796F]" />
+                      <span>Unlimited CareerCasts</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-[#01796F]" />
+                      <span>HD Video Recording</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-[#01796F]" />
+                      <span>Advanced Analytics</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-[#01796F]" />
+                      <span>Priority Support</span>
+                    </li>
                   </ul>
                 </div>
                 <button
@@ -373,9 +459,9 @@ export default function Dashboard() {
                     handleClosePricingPopup();
                     navigate('/billing');
                   }}
-                  className="w-full bg-[#01796F] text-white py-3 rounded-lg font-semibold hover:bg-[#016761]"
+                  className="w-full bg-[#01796F] text-white py-3 rounded-lg font-semibold hover:bg-[#016761] transition-colors"
                 >
-                  Upgrade Now
+                  Upgrade Now - $9.99
                 </button>
               </div>
             </div>

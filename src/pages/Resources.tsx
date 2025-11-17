@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import { BookOpen, Video, FileText, Lightbulb, TrendingUp, Award, X, Menu } from 'lucide-react';
+import { BookOpen, Video, FileText, Lightbulb, TrendingUp, Award, X, Menu, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Resources() {
@@ -24,6 +24,7 @@ export default function Resources() {
       title: 'Video Resume Best Practices',
       description: 'Learn how to create compelling video resumes that stand out to employers',
       color: 'from-blue-500 to-blue-600',
+      link: 'https://example.com/video-resume-best-practices',
       detailedContent: `
         <h3 class="text-xl font-bold text-gray-900 mb-4">Video Resume Best Practices</h3>
         <p class="text-gray-600 mb-4">Creating an effective video resume requires more than just recording yourself talking. Here are key strategies to make your video resume stand out:</p>
@@ -66,6 +67,7 @@ export default function Resources() {
       title: 'Resume Templates',
       description: 'Download professional resume templates tailored for various industries',
       color: 'from-green-500 to-green-600',
+      link: 'https://example.com/resume-templates',
       detailedContent: `
         <h3 class="text-xl font-bold text-gray-900 mb-4">Professional Resume Templates</h3>
         <p class="text-gray-600 mb-4">Our professionally designed templates help you create a standout resume that gets noticed by employers:</p>
@@ -102,6 +104,7 @@ export default function Resources() {
       title: 'Interview Tips',
       description: 'Master the art of interviewing with our comprehensive guide',
       color: 'from-yellow-500 to-yellow-600',
+      link: 'https://example.com/interview-tips',
       detailedContent: `
         <h3 class="text-xl font-bold text-gray-900 mb-4">Mastering Job Interviews</h3>
         <p class="text-gray-600 mb-4">Ace your next interview with these proven strategies and techniques:</p>
@@ -144,6 +147,7 @@ export default function Resources() {
       title: 'Career Development',
       description: 'Strategies for advancing your career and achieving professional goals',
       color: 'from-purple-500 to-purple-600',
+      link: 'https://example.com/career-development',
       detailedContent: `
         <h3 class="text-xl font-bold text-gray-900 mb-4">Career Advancement Strategies</h3>
         <p class="text-gray-600 mb-4">Take control of your professional growth with these proven development techniques:</p>
@@ -186,6 +190,7 @@ export default function Resources() {
       title: 'Skill Building',
       description: 'Courses and certifications to enhance your professional skillset',
       color: 'from-red-500 to-red-600',
+      link: 'https://example.com/skill-building',
       detailedContent: `
         <h3 class="text-xl font-bold text-gray-900 mb-4">Professional Skill Enhancement</h3>
         <p class="text-gray-600 mb-4">Boost your career prospects with these essential skill-building resources:</p>
@@ -271,8 +276,7 @@ export default function Resources() {
               {resources.map((resource, index) => (
                 <div
                   key={index}
-                  onClick={() => setSelectedResource(index)}
-                  className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all cursor-pointer group"
+                  className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-all group"
                 >
                   <div className={`w-12 h-12 bg-gradient-to-br ${resource.color} rounded-lg flex items-center justify-center mb-4`}>
                     <resource.icon className="w-6 h-6 text-white" />
@@ -283,6 +287,22 @@ export default function Resources() {
                   <p className="text-gray-600 text-sm sm:text-base">
                     {resource.description}
                   </p>
+                  <div className="mt-4">
+                    <a 
+                      href={resource.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[#01796F] hover:underline text-sm font-medium flex items-center gap-1"
+                    >
+                      Free Links <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedResource(index)}
+                    className="mt-3 w-full py-2 text-center text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    View Details
+                  </button>
                 </div>
               ))}
             </div>

@@ -8,6 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import mammoth from "mammoth";
 import * as pdfjsLib from "pdfjs-dist";
 import Sidebar from '../components/Sidebar';
+import { showToast } from "../components/ui/toast";
 
 // Use unpkg CDN which is more reliable
 const pdfjsVersion = pdfjsLib.version || '5.4.296';
@@ -36,13 +37,13 @@ const Step2: React.FC = () => {
     const fileExtension = file.name.split(".").pop()?.toLowerCase();
 
     if (!validTypes.includes(file.type) && !["pdf", "doc", "docx"].includes(fileExtension || "")) {
-      alert("Please upload a PDF or DOCX file.");
+      showToast("Please upload a PDF or DOCX file.", "warning");
       return;
     }
 
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert("File size exceeds 10MB limit.");
+      showToast("File size exceeds 10MB limit.", "warning");
       return;
     }
 
@@ -79,8 +80,14 @@ const Step2: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) return alert("Please select a resume file.");
-    if (!user) return alert("Please sign in again before uploading.");
+    if (!selectedFile) {
+      showToast("Please select a resume file.", "warning");
+      return;
+    }
+    if (!user) {
+      showToast("Please sign in again before uploading.", "warning");
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -155,11 +162,11 @@ const Step2: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      alert("✅ Resume uploaded and text extracted successfully!");
+      showToast("Resume uploaded and text extracted successfully!", "success");
       navigate("/step3");
     } catch (err: any) {
       console.error("❌ Upload failed:", err.message);
-      alert("Upload failed. Please try again.");
+      showToast("Upload failed. Please try again.", "error");
     } finally {
       setIsUploading(false);
     }
@@ -238,8 +245,8 @@ const Step2: React.FC = () => {
                   </div>
                 </div>
 
-                <CardTitle className="text-xl sm:text-2xl font-bold text-center">Upload Your Resume</CardTitle>
-                <p className="text-gray-600 text-center mt-2 text-sm sm:text-base">
+                <CardTitle className="text-xl font-bold text-center">Upload Your Resume</CardTitle>
+                <p className="text-gray-600 text-center mt-2 text-sm">
                   Upload your resume in PDF or DOCX format
                 </p>
               </CardHeader>
@@ -247,9 +254,9 @@ const Step2: React.FC = () => {
               <CardContent>
                 <form onSubmit={handleSubmit}>
                   <div
-                    className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center cursor-pointer transition-colors ${
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                       isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400"
-                    } ${!selectedFile ? "min-h-[150px] sm:min-h-[200px] flex items-center justify-center" : ""}`}
+                    } ${!selectedFile ? "min-h-[150px] flex items-center justify-center" : "min-h-[80px] flex items-center justify-center bg-green-50 border-green-200"}`}
                     onClick={() => fileInputRef.current?.click()}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
@@ -257,17 +264,18 @@ const Step2: React.FC = () => {
                   >
                     {!selectedFile ? (
                       <div>
-                        <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📄</div>
-                        <p className="text-base sm:text-lg font-medium text-gray-700 mb-1 sm:mb-2">
+                        <div className="text-3xl mb-3">📄</div>
+                        <p className="text-base font-medium text-gray-700 mb-1">
                           Click to upload or drag and drop
                         </p>
-                        <p className="text-xs sm:text-sm text-gray-500">PDF or DOCX (max 10MB)</p>
+                        <p className="text-xs text-gray-500">PDF or DOCX (max 10MB)</p>
                       </div>
                     ) : (
-                      <div className="text-center">
-                        <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">✅</div>
-                        <p className="text-base sm:text-lg font-medium text-gray-700 mb-1 sm:mb-2">Resume Selected</p>
-                        <p className="text-xs sm:text-sm text-gray-500">Ready to proceed to next step</p>
+                      <div className="flex items-center justify-center space-x-2 text-green-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="font-medium">Resume Uploaded Successfully</span>
                       </div>
                     )}
 
@@ -281,22 +289,29 @@ const Step2: React.FC = () => {
                   </div>
 
                   {selectedFile && (
-                    <div className="bg-blue-50 border-l-4 border-blue-500 rounded p-3 sm:p-4 mt-3 sm:mt-4">
-                      <div className="flex justify-between items-start">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4 flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-green-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
                         <div>
-                          <div className="font-medium text-gray-900 text-sm sm:text-base">{selectedFile.name}</div>
-                          <div className="text-xs text-gray-600 mt-1">
-                            {formatFileSize(selectedFile.size)} • {selectedFile.type || "Document"}
+                          <div className="font-medium text-gray-900 text-sm">{selectedFile.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {formatFileSize(selectedFile.size)}
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          className="text-red-600 text-xs sm:text-sm hover:text-red-800 transition-colors"
-                          onClick={removeFile}
-                        >
-                          Remove
-                        </button>
                       </div>
+                      <button
+                        type="button"
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        onClick={removeFile}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                   )}
 

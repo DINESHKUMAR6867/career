@@ -157,17 +157,15 @@
 
 
 //   const startTeleprompterScroll = () => {
-//     let y = 50;
+//     let y = 100; // starts below Record button
+//     const speed = parseFloat(localStorage.getItem("teleprompterSpeed") || "1"); // Get speed from localStorage
 //     const interval = setInterval(() => {
-//       y -= 0.25;
+//       y -= 0.18 * speed; // Apply speed multiplier
 //       if (teleprompterRef.current) {
-//         teleprompterRef.current.style.top = `${y}%`;
+//         teleprompterRef.current.style.transform = `translate(-50%, ${y}%)`;
 //       }
-//       if (y < -50) {
-//         clearInterval(interval);
-//       }
-//     }, 60);
-    
+//       if (y < -200) clearInterval(interval);
+//     }, 40);
 //     setScrollInterval(interval);
 //   };
 
@@ -293,6 +291,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../contexts/AuthContext";
+import { showToast } from "../components/ui/toast";
 
 const Record: React.FC = () => {
   const navigate = useNavigate();
@@ -334,6 +333,8 @@ const Record: React.FC = () => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => videoRef.current?.play();
+          // Ensure camera is on initially
+          stream.getVideoTracks().forEach(track => track.enabled = true);
         }
 
         await new Promise((r) => setTimeout(r, 1200)); // wait for tracks
@@ -353,7 +354,7 @@ const Record: React.FC = () => {
         console.log("✅ MediaRecorder ready:", mimeType);
       } catch (err) {
         console.error("🚫 Camera/Mic access failed:", err);
-        alert("Please allow camera and microphone access, then reload the page.");
+        showToast("Please allow camera and microphone access, then reload the page.", "error");
       }
     };
 
@@ -380,8 +381,9 @@ const Record: React.FC = () => {
 
   const startTeleprompterScroll = () => {
   let y = 100; // starts below Record button
+  const speed = parseFloat(localStorage.getItem("teleprompterSpeed") || "1"); // Get speed from localStorage
   const interval = setInterval(() => {
-    y -= 0.18; // scrolls faster upward
+    y -= 0.18 * speed; // Apply speed multiplier
     if (teleprompterRef.current) {
       teleprompterRef.current.style.transform = `translate(-50%, ${y}%)`;
     }
@@ -396,7 +398,7 @@ const Record: React.FC = () => {
   // 🔹 Start/Stop Recording
   const handleRecordClick = async () => {
     if (!mediaRecorder) {
-      alert("Recorder not initialized yet.");
+      showToast("Recorder not initialized yet.", "warning");
       return;
     }
 
@@ -404,6 +406,12 @@ const Record: React.FC = () => {
       setState("armed");
     } else if (state === "armed") {
       try {
+        // Turn camera on
+        if (videoRef.current && videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject as MediaStream;
+          stream.getVideoTracks().forEach(track => track.enabled = true);
+        }
+      
         chunksRef.current = [];
         setStartTime(Date.now());
         mediaRecorder.start(250); // collect every 250ms
@@ -432,6 +440,12 @@ const Record: React.FC = () => {
     if (timerInterval) clearInterval(timerInterval);
     if (teleprompterRef.current) teleprompterRef.current.style.top = "60%";
 
+    // Turn camera off
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getVideoTracks().forEach(track => track.enabled = false);
+    }
+
     console.log("📹 Finalizing recording...");
     await new Promise((res) => setTimeout(res, 300));
 
@@ -443,7 +457,7 @@ const Record: React.FC = () => {
     console.log("⏱ Duration:", durationSeconds, "seconds");
 
     if (blob.size === 0) {
-      alert("No video data captured. Please check your camera and mic.");
+      showToast("No video data captured. Please check your camera and mic.", "error");
     }
 
     // ✅ Fade effect for smooth UX
@@ -511,12 +525,12 @@ const Record: React.FC = () => {
       if (updateError) throw updateError;
 
       console.log("✅ Uploaded:", publicUrl);
-      alert("Recording uploaded successfully!");
+      showToast("Recording uploaded successfully!", "success");
       localStorage.setItem("recordedVideoUrl", publicUrl);
       navigate(`/final-result/${jobRequestId}`);
     } catch (err: any) {
       console.error("❌ Upload failed:", err.message);
-      alert("Upload failed. Please try again.");
+      showToast("Upload failed. Please try again.", "error");
     } finally {
       setIsUploading(false);
     }

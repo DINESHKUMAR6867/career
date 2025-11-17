@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button";
 import { Check, Loader2, AlertCircle, Menu } from "lucide-react";
 import Sidebar from '../components/Sidebar';
 import { useAuth } from "../contexts/AuthContext";
+import { showToast } from "../components/ui/toast";
 
 // ✅ real GPT endpoint
 // Handle both Vercel and local environment variables
@@ -18,6 +19,7 @@ const Step3: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [teleprompterSpeed, setTeleprompterSpeed] = useState<number>(1);
 
   const handleLogout = () => {
     navigate('/');
@@ -156,10 +158,11 @@ Format as plain text (no Markdown).
   // -------------- RECORD & FINISH --------------
   const handleStartRecording = () => {
     if (!teleprompterText || teleprompterText.includes("Please go back")) {
-      alert("Wait for AI to generate your script first.");
+      showToast("Wait for AI to generate your script first.", "warning");
       return;
     }
     localStorage.setItem("teleprompterText", teleprompterText);
+    localStorage.setItem("teleprompterSpeed", teleprompterSpeed.toString()); // Save speed
     const castId = `career_cast_${Date.now()}`;
     localStorage.setItem("current_cast_id", castId);
     navigate("/record");
@@ -167,10 +170,10 @@ Format as plain text (no Markdown).
 
   const handleFinish = () => {
     if (!teleprompterText) {
-      alert("Generate a valid introduction before finishing.");
+      showToast("Generate a valid introduction before finishing.", "warning");
       return;
     }
-    alert("CareerCast completed! Redirecting to dashboard.");
+    showToast("CareerCast completed! Redirecting to dashboard.", "success");
     navigate("/dashboard");
   };
 
@@ -318,6 +321,26 @@ Format as plain text (no Markdown).
                           {teleprompterText}
                         </div>
                       )}
+                    </div>
+
+                    {/* Speed Control Slider */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Teleprompter Speed: {teleprompterSpeed.toFixed(1)}x
+                      </label>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value={teleprompterSpeed}
+                        onChange={(e) => setTeleprompterSpeed(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Slower</span>
+                        <span>Faster</span>
+                      </div>
                     </div>
 
                     <Button
