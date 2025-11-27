@@ -6976,7 +6976,7 @@ import { showToast } from "../components/ui/toast";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 // ───────────────── CONFIG ─────────────────
-const PREMIUM_PRICE = 9.99;
+const PREMIUM_PRICE = 0.10;
 const FREE_LIMIT = 3;
 const USAGE_TABLE_NAME = "careercasts";
 
