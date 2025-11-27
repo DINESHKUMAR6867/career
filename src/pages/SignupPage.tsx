@@ -2107,7 +2107,7 @@ const SignupPage: React.FC = () => {
             </button>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              SkillPassport.AI – Terms &amp; Conditions
+              NetworkNote – Terms &amp; Conditions
             </h2>
 
             <div className="text-gray-600 space-y-3">
@@ -2116,7 +2116,7 @@ const SignupPage: React.FC = () => {
               <ul className="space-y-2 list-disc list-inside">
                 <li>
                   I am purchasing lifetime access to
-                  SkillPassport.AI&apos;s verified job portal database
+                  NetworkNote&apos;s verified job portal database
                 </li>
                 <li>
                   This is a digital, non-refundable product, no
@@ -2131,7 +2131,7 @@ const SignupPage: React.FC = () => {
                   hiring policy at the time of access
                 </li>
                 <li>
-                  SkillPassport.AI is not a recruitment agency and does
+                  NetworkNote is not a recruitment agency and does
                   not guarantee any job or sponsorship
                 </li>
                 <li>
