@@ -102,7 +102,7 @@ ${jobDescription}
 ${resumeText}
 
 ✍️ Instructions:
-- Duration ≈ 45–60 seconds (≈ 120–150 words)
+- Duration ≈ 100–130 seconds (≈ 250–300 words)
 - Begin with a warm, professional greeting (e.g., “Hello, my name is …”)
 - Mention the ${jobTitle} role naturally.
 - Highlight the candidate’s strongest, most relevant experience.

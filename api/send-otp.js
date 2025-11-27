@@ -917,7 +917,7 @@ export default async function handler(req, res) {
           },
           body: JSON.stringify({
             message: {
-              subject: "Your One-Time Password (OTP) – careercast",
+              subject: "Your One-Time Password (OTP) – NetworkNote",
               body: {
                 contentType: "HTML",
                 content: `

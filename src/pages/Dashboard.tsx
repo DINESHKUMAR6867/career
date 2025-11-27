@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [showPricingPopup, setShowPricingPopup] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userCountry, setUserCountry] = useState<"US" | "GB" | "OTHER">("OTHER");
 
   // New: Premium plan tracking
   const [isPremiumActive, setIsPremiumActive] = useState(false);
@@ -173,6 +174,28 @@ export default function Dashboard() {
         );
     }
   };
+
+  // Add this useEffect hook to detect user country
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const response = await fetch("https://ipapi.co/json/");
+        const data = await response.json();
+        if (data.country_code === "US") {
+          setUserCountry("US");
+        } else if (data.country_code === "GB") {
+          setUserCountry("GB");
+        } else {
+          setUserCountry("OTHER");
+        }
+      } catch (error) {
+        console.log("Could not detect country, defaulting to OTHER");
+        setUserCountry("OTHER");
+      }
+    };
+
+    detectCountry();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white flex">
@@ -431,7 +454,7 @@ export default function Dashboard() {
                   <Video className="mx-auto w-10 h-10 text-[#01796F]" />
                   <h4 className="font-bold text-lg mt-2">Unlock Unlimited Network Notes</h4>
                   <p className="text-gray-600 text-sm mt-1">
-                    You've reached your 3 free recordings. Upgrade now for 30 days of unlimited access.
+                    You've reached your 3 free recordings. Upgrade now for unlimited access.
                   </p>
                 </div>
                 <div className="bg-[#01796F]/5 rounded-lg p-4 mb-5">
@@ -461,7 +484,7 @@ export default function Dashboard() {
                   }}
                   className="w-full bg-[#01796F] text-white py-3 rounded-lg font-semibold hover:bg-[#016761] transition-colors"
                 >
-                  Upgrade Now - $12.99
+                  {userCountry === "GB" ? "Upgrade Now - £9.99" : "Upgrade Now - $9.99"}
                 </button>
               </div>
             </div>
