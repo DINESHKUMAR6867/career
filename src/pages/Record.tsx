@@ -10,7 +10,7 @@
 //   const videoRef = useRef<HTMLVideoElement>(null);
 //   const timerRef = useRef<HTMLSpanElement>(null);
 //   const teleprompterRef = useRef<HTMLDivElement>(null);
-  
+
 //   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 //   const [chunks, setChunks] = useState<Blob[]>([]);
 //   const [state, setState] = useState<'idle' | 'armed' | 'recording'>('idle');
@@ -51,7 +51,7 @@
 //         // Initialize MediaRecorder
 //         const options = { mimeType: 'video/webm;codecs=vp8,opus' };
 //         const recorder = new MediaRecorder(stream, options);
-        
+
 //         recorder.ondataavailable = (event) => {
 //           if (event.data.size > 0) {
 //             setChunks(prev => [...prev, event.data]);
@@ -173,14 +173,14 @@
 //     setIsTimerVisible(true);
 //     const start = Date.now();
 //     setStartTime(start);
-    
+
 //     const interval = setInterval(() => {
 //       const seconds = Math.floor((Date.now() - start) / 1000);
 //       const minutes = Math.floor(seconds / 60);
 //       const remainingSeconds = String(seconds % 60).padStart(2, '0');
 //       setTimer(`${minutes}:${remainingSeconds}`);
 //     }, 1000);
-    
+
 //     setTimerInterval(interval);
 //   };
 // const handleRecordClick = () => {
@@ -239,10 +239,10 @@
 //           muted
 //           className="w-full h-full object-cover"
 //         />
-        
+
 //         {/* Guide Line */}
 //         <div className="absolute top-[44%] left-0 right-0 h-0.5 bg-blue-400 bg-opacity-60" />
-        
+
 //         {/* Timer */}
 //         <div 
 //           className={`absolute top-3 right-4 text-white font-semibold text-xl flex items-center ${
@@ -254,7 +254,7 @@
 //             {isUploading ? 'Uploading...' : timer}
 //           </span>
 //         </div>
-        
+
 //         {/* Teleprompter */}
 //         <div
 //           ref={teleprompterRef}
@@ -262,7 +262,7 @@
 //         >
 //           {teleprompterText}
 //         </div>
-        
+
 //         {/* Record Button */}
 //         <button
 //           onClick={handleRecordClick}
@@ -411,7 +411,7 @@
 //           const stream = videoRef.current.srcObject as MediaStream;
 //           stream.getVideoTracks().forEach(track => track.enabled = true);
 //         }
-      
+
 //         chunksRef.current = [];
 //         setStartTime(Date.now());
 //         mediaRecorder.start(250); // collect every 250ms
@@ -622,6 +622,8 @@ const Record: React.FC = () => {
   );
   const [isUploading, setIsUploading] = useState(false);
   const [teleprompterText, setTeleprompterText] = useState("");
+  const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
+  const [checkingCredits, setCheckingCredits] = useState(false);
 
   // 🔹 Load teleprompter text
   useEffect(() => {
@@ -630,6 +632,36 @@ const Record: React.FC = () => {
       "Please complete Step 3 to generate your introduction script.";
     setTeleprompterText(text);
   }, []);
+
+  // 🔹 Check user credits on mount
+  useEffect(() => {
+    const checkCredits = async () => {
+      if (!user) return;
+
+      setCheckingCredits(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('credits_remaining')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching credits:', error);
+          return;
+        }
+
+        setCreditsRemaining(data?.credits_remaining ?? 0);
+        console.log('📊 User credits:', data?.credits_remaining);
+      } catch (err) {
+        console.error('Error checking credits:', err);
+      } finally {
+        setCheckingCredits(false);
+      }
+    };
+
+    checkCredits();
+  }, [user]);
 
   // ------------------------------------------
   // Camera + Recorder Initialization
@@ -760,6 +792,18 @@ const Record: React.FC = () => {
 
     // START recording
     if (state === "idle") {
+      // Check credits before starting recording
+      if (creditsRemaining !== null && creditsRemaining <= 0) {
+        showToast(
+          "You have no recording credits. Please purchase more credits to continue.",
+          "error"
+        );
+        // Redirect to billing after 2 seconds
+        setTimeout(() => {
+          navigate('/billing');
+        }, 2000);
+        return;
+      }
       try {
         // Turn camera on
         if (videoRef.current && videoRef.current.srcObject) {
@@ -916,10 +960,32 @@ const Record: React.FC = () => {
       console.log("✅ Uploaded:", publicUrl);
       showToast("Recording uploaded successfully!", "success");
       localStorage.setItem("recordedVideoUrl", publicUrl || "");
+
+      // Refresh credits count
+      if (creditsRemaining !== null) {
+        setCreditsRemaining(creditsRemaining - 1);
+      }
+
       navigate(`/final-result/${jobRequestId}`);
     } catch (err: any) {
       console.error("❌ Upload failed:", err.message);
-      showToast("Upload failed. Please try again.", "error");
+
+      // Check if error is related to insufficient credits
+      if (err.message && err.message.toLowerCase().includes('insufficient credits')) {
+        showToast(
+          "Insufficient credits. Please purchase more credits to create recordings.",
+          "error"
+        );
+        // Redirect to billing
+        setTimeout(() => {
+          navigate('/billing');
+        }, 2000);
+      } else {
+        showToast(
+          err.message || "Upload failed. Please try again.",
+          "error"
+        );
+      }
     } finally {
       setIsUploading(false);
     }
@@ -942,12 +1008,28 @@ const Record: React.FC = () => {
         {/* Guide Line */}
         <div className="absolute top-[44%] left-0 right-0 h-0.5 bg-blue-400 bg-opacity-60" />
 
+        {/* Credits Indicator */}
+        {creditsRemaining !== null && (
+          <div className="absolute top-3 left-4 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-2">
+            <span className="text-white text-sm font-medium">
+              {creditsRemaining > 0 ? (
+                <>
+                  <span className="text-green-400">●</span> {creditsRemaining} {creditsRemaining === 1 ? 'credit' : 'credits'}
+                </>
+              ) : (
+                <>
+                  <span className="text-red-400">●</span> No credits
+                </>
+              )}
+            </span>
+          </div>
+        )}
+
         {/* Timer */}
         <div className="absolute top-3 right-4 text-white font-semibold text-xl flex items-center">
           <span
-            className={`w-2 h-2 rounded-full mr-2 ${
-              state === "recording" ? "bg-red-500" : "bg-gray-400"
-            }`}
+            className={`w-2 h-2 rounded-full mr-2 ${state === "recording" ? "bg-red-500" : "bg-gray-400"
+              }`}
           />
           <span ref={timerRef}>{isUploading ? "Uploading..." : timer}</span>
         </div>
@@ -976,19 +1058,17 @@ const Record: React.FC = () => {
           className={`absolute bottom-6 left-1/2 transform -translate-x-1/2 w-20 h-20 rounded-full 
             border-4 border-white/85 cursor-pointer transition-all duration-200 
             flex items-center justify-center
-            ${
-              recordingDisabled
-                ? "opacity-40 cursor-not-allowed"
-                : state === "recording"
+            ${recordingDisabled
+              ? "opacity-40 cursor-not-allowed"
+              : state === "recording"
                 ? "bg-red-500 shadow-[0_0_0_6px_rgba(255,59,48,0.35),0_0_24px_rgba(255,59,48,0.8)]"
                 : "bg-red-500"
             }`}
         >
           {/* inner dot for nicer UI */}
           <div
-            className={`w-8 h-8 rounded-full ${
-              state === "recording" ? "bg-red-700" : "bg-red-400"
-            }`}
+            className={`w-8 h-8 rounded-full ${state === "recording" ? "bg-red-700" : "bg-red-400"
+              }`}
           />
         </button>
       </div>
