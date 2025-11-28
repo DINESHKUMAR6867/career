@@ -41,6 +41,16 @@
  * 2. Copy and paste the content into the SQL Editor and run it.
  *    (This ensures we don't accidentally give double credits)
  */
+
+-- =====================================================
+-- STEP 1.3: Prevent Duplicate Payments (CRITICAL)
+-- =====================================================
+
+/**
+ * 1. Open `supabase-functions/migrations/prevent_duplicate_payments.sql`
+ * 2. Copy and paste the content into the SQL Editor and run it.
+ *    (This prevents "double charging" of credits if the frontend submits twice)
+ */
  * 3. Click on "SQL Editor" in the left sidebar
  * 4. Click "New Query"
  * 5. Copy and paste the ENTIRE contents of `add_credits_system.sql`

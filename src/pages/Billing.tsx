@@ -363,8 +363,27 @@ export default function Billing() {
         .single();
 
       if (insertErr) {
+        // Check for duplicate key error (Postgres code 23505)
+        if (insertErr.code === "23505") {
+          console.warn("Payment already recorded (duplicate key). Treating as success.");
+          // Fetch existing record
+          const { data: existing } = await supabase
+            .from("payment_details")
+            .select("*")
+            .eq("paypal_order_id", data.orderID)
+            .single();
+
+          if (existing) {
+            await onPaymentSuccess(existing as PaymentDetail);
+            return captureResult;
+          }
+        }
+
         console.error("payment_details insert error:", insertErr);
-        showToast("Payment recorded but database update failed. Please contact support.", "error");
+        showToast(
+          "Payment recorded but database update failed. Please contact support.",
+          "error"
+        );
         setProcessingPayment(false);
         return;
       }

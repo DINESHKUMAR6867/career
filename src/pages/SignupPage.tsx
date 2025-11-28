@@ -1753,7 +1753,11 @@ const SignupPage: React.FC = () => {
         ]);
 
         if (payError) {
-          console.error("❌ payment_details insert error:", payError);
+          if (payError.code === "23505") {
+            console.warn("Payment already recorded (duplicate). Skipping insertion.");
+          } else {
+            console.error("❌ payment_details insert error:", payError);
+          }
         } else {
           console.log("✅ payment_details inserted, credits should be granted.");
         }
@@ -1982,8 +1986,8 @@ const SignupPage: React.FC = () => {
                   type="submit"
                   disabled={loadingForm || !agreedToTerms}
                   className={`w-full rounded-xl px-6 py-3 text-lg font-semibold text-white shadow-lg hover:scale-[1.01] transition-transform focus:ring-4 focus:ring-blue-300 disabled:opacity-70 disabled:cursor-not-allowed ${agreedToTerms
-                      ? "bg-gradient-to-r from-blue-800 to-purple-800 hover:from-blue-700 hover:to-purple-700"
-                      : "bg-gradient-to-r from-blue-600 to-purple-600"
+                    ? "bg-gradient-to-r from-blue-800 to-purple-800 hover:from-blue-700 hover:to-purple-700"
+                    : "bg-gradient-to-r from-blue-600 to-purple-600"
                     }`}
                 >
                   {loadingForm ? "Creating record..." : "Proceed to Payment"}
