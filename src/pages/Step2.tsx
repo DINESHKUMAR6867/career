@@ -72,7 +72,6 @@ const Step2: React.FC = () => {
   const handleDragLeave = () => {
     setIsDragging(false);
   };
-
   const removeFile = () => {
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -101,9 +100,10 @@ const Step2: React.FC = () => {
         (user && (user as any)?.user_metadata?.full_name?.split(" ")[0]) ||
         "user";
 
-
       const cleanFirstName = firstName.trim().replace(/\s+/g, "_").toLowerCase();
-      const fileName = `${cleanFirstName}_careercast_resume.${fileExt}`;
+      // ✅ Append timestamp to ensure unique filename for every upload
+      const timestamp = Date.now();
+      const fileName = `${cleanFirstName}_careercast_resume_${timestamp}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
       // 🔹 Upload to Supabase

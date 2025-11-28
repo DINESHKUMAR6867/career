@@ -441,16 +441,16 @@ export default function Dashboard() {
               <div className="p-5 sm:p-6">
                 <div className="text-center mb-4">
                   <Video className="mx-auto w-10 h-10 text-[#01796F]" />
-                  <h4 className="font-bold text-lg mt-2">Unlock Unlimited Network Notes</h4>
+                  <h4 className="font-bold text-lg mt-2">Get More Network Notes</h4>
                   <p className="text-gray-600 text-sm mt-1">
-                    You've reached your 3 free recordings. Upgrade now for unlimited access.
+                    You've reached your 3 recordings. Top up now to continue recording.
                   </p>
                 </div>
                 <div className="bg-[#01796F]/5 rounded-lg p-4 mb-5">
                   <ul className="text-sm text-gray-700 space-y-2">
                     <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-[#01796F]" />
-                      <span>Unlimited Network Notes</span>
+                      <span>Additional Network Notes</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-[#01796F]" />
@@ -473,7 +473,7 @@ export default function Dashboard() {
                   }}
                   className="w-full bg-[#01796F] text-white py-3 rounded-lg font-semibold hover:bg-[#016761] transition-colors"
                 >
-                  {userCountry === "GB" ? "Upgrade Now - £9.99" : "Upgrade Now - $9.99"}
+                  {userCountry === "GB" ? "Top Up Now - £9.99" : "Top Up Now - $9.99"}
                 </button>
               </div>
             </div>
