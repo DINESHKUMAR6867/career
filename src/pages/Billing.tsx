@@ -7350,14 +7350,14 @@ export default function Billing() {
   const plans = [
     {
       key: "free",
-      name: "Free",
-      price: "$0",
+      name: "Base Plan",
+      price: "$12.99",
       period: "forever",
       features: [
-        "3 NetworkNote per month",
+        "3 NetworkNote",
         "Basic video recording",
         "Standard resume upload",
-        "Community support",
+        // "Community support",
       ],
       current: !isPremiumActive,
     },
@@ -7672,7 +7672,7 @@ export default function Billing() {
                                 className="w-full py-2 sm:py-3 rounded-lg font-semibold bg-slate-100 text-slate-500 cursor-not-allowed"
                                 disabled
                               >
-                                {plan.current ? "Current Plan" : "Free Plan"}
+                                {plan.current ? "Current Plan" : "Base Plan"}
                               </button>
                             )}
                           </div>

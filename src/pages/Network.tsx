@@ -170,14 +170,14 @@ const NetworkPage: React.FC = () => {
                     LINKEDIN NETWORKING
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                {/* <div className="flex flex-wrap gap-2">
                   <button className="px-3 py-1.5 sm:px-5 sm:py-2.5 bg-white text-[#0B4F6C] font-medium rounded-lg border-2 border-[#0B4F6C] hover:bg-[#0B4F6C] hover:text-white transition-colors text-xs sm:text-sm">
                     Favorites ❤️
                   </button>
                   <button className="px-3 py-1.5 sm:px-5 sm:py-2.5 bg-white text-[#0B4F6C] font-medium rounded-lg border-2 border-[#0B4F6C] hover:bg-[#0B4F6C] hover:text-white transition-colors text-xs sm:text-sm">
                     How it works 💡
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
