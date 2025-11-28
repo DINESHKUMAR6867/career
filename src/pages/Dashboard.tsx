@@ -116,19 +116,12 @@ export default function Dashboard() {
 
   // 🟢 Handle new careercast click
   const handleNewCast = () => {
-    const completedRecordings = careercasts.filter(
-      (cast) => cast.status === 'recorded'
-    ).length;
-
-    if (isPremiumActive) {
-      // ✅ Premium user → unlimited recordings
+    if (credits > 0) {
+      // ✅ Has credits → allow recording
       navigate('/step1');
-    } else if (completedRecordings >= 3) {
-      // ⛔ Free user with 3+ recordings → show upgrade popup
-      setShowPricingPopup(true);
     } else {
-      // 🟡 Free user under limit
-      navigate('/step1');
+      // ⛔ No credits → show upgrade popup
+      setShowPricingPopup(true);
     }
   };
 
@@ -443,7 +436,7 @@ export default function Dashboard() {
                   <Video className="mx-auto w-10 h-10 text-[#01796F]" />
                   <h4 className="font-bold text-lg mt-2">Get More Network Notes</h4>
                   <p className="text-gray-600 text-sm mt-1">
-                    You've reached your 3 recordings. Top up now to continue recording.
+                    You've used all your credits. Top up now to continue recording.
                   </p>
                 </div>
                 <div className="bg-[#01796F]/5 rounded-lg p-4 mb-5">

@@ -16,6 +16,30 @@
  * Navigate to your Supabase Dashboard:
  * 1. Go to https://app.supabase.com
  * 2. Select your project
+ * 3. Go to the SQL Editor
+ * 4. Open `supabase-functions/migrations/add_credits_system.sql`
+ * 5. Copy and paste the content into the SQL Editor and run it.
+ */
+
+-- =====================================================
+-- STEP 1.1: Fix the Payment Trigger (CRITICAL)
+-- =====================================================
+
+/**
+ * 1. Open `supabase-functions/migrations/fix_credits_trigger.sql`
+ * 2. Copy and paste the content into the SQL Editor and run it.
+ *    (This ensures credits are granted correctly when payments are inserted)
+ */
+
+-- =====================================================
+-- STEP 1.2: Set Default Credits to 3 (CRITICAL)
+-- =====================================================
+
+/**
+ * 1. Open `supabase-functions/migrations/set_default_credits_to_3.sql`
+ * 2. Copy and paste the content into the SQL Editor and run it.
+ *    (This ensures new users start with 3 credits automatically)
+ */
  * 3. Click on "SQL Editor" in the left sidebar
  * 4. Click "New Query"
  * 5. Copy and paste the ENTIRE contents of `add_credits_system.sql`
