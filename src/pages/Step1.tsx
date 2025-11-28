@@ -40,7 +40,6 @@ const Step1: React.FC = () => {
       return;
     }
 
-    // Directly use the user from the context
     if (!user) {
       showToast('Please sign in again.', 'warning');
       return;
@@ -49,18 +48,45 @@ const Step1: React.FC = () => {
     setSubmitting(true);
 
     try {
-      // ✅ insert new job request with email field
+      // ✅ First, ensure the user's profile exists
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      // If profile doesn't exist, create it
+      if (!profileData) {
+        console.log('Creating profile for user:', user.email);
+        await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: user.id,
+              email: user.email,
+              plan_tier: 'free',
+              plan_status: 'active',
+              credits_remaining: 0,
+            },
+          ]);
+      }
+
+      // ✅ Insert new job request
+      const jobRequestData: any = {
+        user_id: user.id,
+        job_title: jobTitle,
+        job_description: jobDescription,
+        status: 'draft',
+      };
+
+      // Add email only if it exists
+      if (user.email) {
+        jobRequestData.email = user.email;
+      }
+
       const { data, error } = await supabase
         .from('job_requests')
-        .insert([
-          {
-            user_id: user.id,
-            email: user.email, // Add email to satisfy foreign key constraint
-            job_title: jobTitle,
-            job_description: jobDescription,
-            status: 'draft',
-          },
-        ])
+        .insert([jobRequestData])
         .select('id')
         .single();
 
@@ -70,7 +96,7 @@ const Step1: React.FC = () => {
         return;
       }
 
-      // ✅ store job info + id locally for next steps
+      // ✅ Store job info + id locally for next steps
       localStorage.setItem('careercast_jobTitle', jobTitle);
       localStorage.setItem('careercast_jobDescription', jobDescription);
       localStorage.setItem('current_job_request_id', data.id);
@@ -114,7 +140,7 @@ const Step1: React.FC = () => {
             <Menu className="h-6 w-6" />
           </button>
           <div className="font-bold text-xl text-[#0B4F6C]">careercast</div>
-          <div className="w-10"></div> {/* Spacer for alignment */}
+          <div className="w-10"></div>
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-gray-50">
@@ -123,7 +149,6 @@ const Step1: React.FC = () => {
               <CardHeader>
                 {/* Step Indicator */}
                 <div className="flex justify-between items-center mb-6 relative px-4 sm:px-8">
-                  {/* Connecting Line - Full gray */}
                   <div className="absolute top-4 left-12 sm:left-16 right-12 sm:right-16 h-0.5 bg-gray-300 -z-10"></div>
 
                   {/* Step 1 - Active */}

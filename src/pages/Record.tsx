@@ -943,6 +943,7 @@ const Record: React.FC = () => {
 
       const { error: insertError } = await supabase.from("recordings").insert({
         job_request_id: jobRequestId,
+        email: user.email, // Add email to satisfy foreign key constraint
         storage_path: publicUrl,
         duration_seconds: durationSeconds,
         size_bytes: blob.size,
