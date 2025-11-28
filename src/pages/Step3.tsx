@@ -2,70 +2,124 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Textarea } from "../components/ui/textarea";
-import { Check, Menu, RefreshCw, Video, Save } from "lucide-react";
-import { supabase } from "../integrations/supabase/client";
-import { useAuth } from "../contexts/AuthContext";
+import { Check, Loader2, AlertCircle, Menu } from "lucide-react";
 import Sidebar from '../components/Sidebar';
+import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../components/ui/toast";
+import { supabase } from "../integrations/supabase/client";
+
+// ✅ real GPT endpoint
+// Handle both Vercel and local environment variables
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
 
 const Step3: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const [teleprompterText, setTeleprompterText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [teleprompterSpeed, setTeleprompterSpeed] = useState(1);
+  const [teleprompterSpeed, setTeleprompterSpeed] = useState<number>(1);
 
   const handleLogout = () => {
     navigate('/');
   };
 
-  // 🔹 Build Prompt
-  const buildPrompt = (jobTitle: string, jobDesc: string, resumeText: string) => {
-    return `
-      You are a professional career coach.
-      Create a 30-60 second video introduction script for a candidate applying for the position of "${jobTitle}".
-      
-      Job Description:
-      ${jobDesc.slice(0, 1500)}
-
-      Candidate's Resume:
-      ${resumeText.slice(0, 2000)}
-
-      The script should be:
-      - Professional, confident, and engaging.
-      - Highlight key skills matching the job description.
-      - Written in the first person ("I am...").
-      - Easy to read aloud (teleprompter friendly).
-      - No placeholders like [Your Name], use the candidate's actual details if available, or generic but natural phrasing.
-    `;
-  };
-
-  // 🔹 Call OpenAI
-  const callOpenAI = async (prompt: string) => {
-    const { data, error } = await supabase.functions.invoke("generate-intro", {
-      body: { prompt },
-    });
-
-    if (error) throw new Error(error.message);
-    return data.introduction || "Could not generate introduction.";
-  };
-
-  // 🔹 Generate Introduction
-  const generateIntroduction = async () => {
-    setIsGenerating(true);
-    setError(null);
+  // ----------- GPT PROMPT FUNCTION -------------
+  const callOpenAI = async (prompt: string): Promise<string> => {
+    // Check if we have a Supabase Edge Function for this
     try {
-      const jobTitle = localStorage.getItem("careercast_jobTitle");
-      const jobDescription = localStorage.getItem("careercast_jobDescription");
-      const resumeText = localStorage.getItem("resumeFullText");
+      console.log('📤 Sending request to Supabase Edge Function: generate-intro');
 
-      if (!jobTitle || !jobDescription || !resumeText) {
-        throw new Error("Missing job title, description, or resume. Please complete Step 1 and 2 first.");
+      const { data, error } = await supabase.functions.invoke('generate-intro', {
+        body: { prompt }
+      });
+
+      if (error) {
+        console.error('Supabase Function Error:', error);
+        throw error;
+      }
+
+      if (data?.introduction) {
+        return data.introduction;
+      }
+
+      // Fallback if data structure is different
+      if (data?.message) return data.message;
+      if (typeof data === 'string') return data;
+
+      throw new Error("Invalid response from generation service");
+
+    } catch (edgeError) {
+      console.warn("Edge function failed, trying direct OpenAI call if key exists...", edgeError);
+
+      // Fallback to direct OpenAI call if Edge Function fails and we have a key (mostly for local dev)
+      if (OPENAI_API_KEY) {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini", // or "gpt-3.5-turbo"
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.7,
+            max_tokens: 400,
+          }),
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`OpenAI API Error: ${errText}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content.trim();
+      }
+
+      throw new Error("Failed to generate introduction. Please try again later.");
+    }
+  };
+
+  // ------------- PROMPT BUILDER ----------------
+  const buildPrompt = (jobTitle: string, jobDescription: string, resumeText: string) => `
+You are an expert HR assistant. Write a *polite, professional, legally appropriate*
+self-introduction video script for a candidate applying for the position of **${jobTitle}**.
+
+Use the information below:
+
+📋 Job Description:
+${jobDescription.substring(0, 1500)}
+
+📄 Candidate Resume Text:
+${resumeText.substring(0, 2000)}
+
+✍️ Instructions:
+- Duration ≈ 100–130 seconds (≈ 250–300 words)
+- Begin with a warm, professional greeting (e.g., “Hello, my name is …”)
+- Mention the ${jobTitle} role naturally.
+- Highlight the candidate’s strongest, most relevant experience.
+- Keep it confident, humble, and human (not robotic).
+- Avoid disclosing personal information beyond [Your Name].
+- End with enthusiasm about the opportunity and gratitude.
+
+Format as plain text (no Markdown). 
+`;
+
+  // ----------- GENERATE INTRO ------------------
+  const generateIntroduction = async (rewrite = false) => {
+    try {
+      rewrite ? setIsRewriting(true) : setIsGenerating(true);
+      setError(null);
+
+      const jobTitle = localStorage.getItem("careercast_jobTitle") || "";
+      const jobDescription = localStorage.getItem("careercast_jobDescription") || "";
+      const resumeText = localStorage.getItem("resumeFullText") || "Resume text not found.";
+
+      if (!jobTitle || !jobDescription) {
+        throw new Error("Missing job title or description. Please complete Step 1 and 2 first.");
       }
 
       const prompt = buildPrompt(jobTitle, jobDescription, resumeText);
@@ -73,9 +127,9 @@ const Step3: React.FC = () => {
 
       setTeleprompterText(result);
       localStorage.setItem("teleprompterText", result);
-    } catch (err: any) {
+    } catch (err) {
       console.error("❌ Error generating introduction:", err);
-      setError(err.message || "Something went wrong while generating.");
+      setError(err instanceof Error ? err.message : "Something went wrong while generating.");
       showToast("Failed to generate script. Please try again.", "error");
     } finally {
       setIsGenerating(false);
@@ -83,37 +137,51 @@ const Step3: React.FC = () => {
     }
   };
 
-  // 🔹 Initialize on Mount
+  // -------- INITIALIZE ON MOUNT ---------------
   useEffect(() => {
     const saved = localStorage.getItem("teleprompterText");
     const jobTitle = localStorage.getItem("careercast_jobTitle");
 
-    if (saved && saved.length > 10) {
+    // Only use saved text if it looks valid (not an error message)
+    const isValidSaved = saved && !saved.includes("Please go back") && saved.length > 20;
+
+    if (isValidSaved) {
       setTeleprompterText(saved);
     } else if (jobTitle) {
       generateIntroduction();
     } else {
       setError("Please complete Step 1 (Job Details) first.");
-      setTeleprompterText("Please go back to Step 1 and provide job details to generate your personalized introduction.");
+      setTeleprompterText(
+        "Please go back to Step 1 and provide job details to generate your personalized introduction."
+      );
     }
   }, []);
 
-  // 🔹 Start Recording
+  // -------------- RECORD & FINISH --------------
   const handleStartRecording = () => {
     if (!teleprompterText || teleprompterText.includes("Please go back")) {
       showToast("Wait for AI to generate your script first.", "warning");
       return;
     }
     localStorage.setItem("teleprompterText", teleprompterText);
-    localStorage.setItem("teleprompterSpeed", teleprompterSpeed.toString());
+    localStorage.setItem("teleprompterSpeed", teleprompterSpeed.toString()); // Save speed
+    const castId = `career_cast_${Date.now()}`;
+    localStorage.setItem("current_cast_id", castId);
     navigate("/record");
   };
 
-  // 🔹 Handle Text Change
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setTeleprompterText(e.target.value);
-    localStorage.setItem("teleprompterText", e.target.value);
+  const handleFinish = () => {
+    if (!teleprompterText) {
+      showToast("Generate a valid introduction before finishing.", "warning");
+      return;
+    }
+    showToast("careercast completed! Redirecting to dashboard.", "success");
+    navigate("/dashboard");
   };
+
+  // -------------- UI ---------------------------
+  const jobTitle = localStorage.getItem("careercast_jobTitle") || "Your Position";
+  const resumeFileName = localStorage.getItem("resumeFileName") || "No resume uploaded";
 
   return (
     <div className="min-h-screen bg-white flex">
@@ -144,7 +212,7 @@ const Step3: React.FC = () => {
             <Menu className="h-6 w-6" />
           </button>
           <div className="font-bold text-xl text-[#0B4F6C]">careercast</div>
-          <div className="w-10"></div>
+          <div className="w-10"></div> {/* Spacer for alignment */}
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-gray-50">
@@ -154,27 +222,24 @@ const Step3: React.FC = () => {
                 {/* Progress bar */}
                 <div className="flex justify-between items-center mb-6 relative px-4 sm:px-8">
                   <div className="absolute top-4 left-12 sm:left-16 right-12 sm:right-16 h-0.5 bg-gray-300 -z-10">
-                    <div className="h-full bg-green-500 w-full" />
+                    <div className="h-full bg-green-500 w-2/3" />
                   </div>
-
-                  <div className="flex flex-col items-center relative z-10">
-                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">
                       <Check className="h-4 w-4" />
                     </div>
                     <span className="text-xs mt-1 text-green-600 font-medium hidden sm:block">Job Details</span>
                     <span className="text-xs mt-1 text-green-600 font-medium sm:hidden">Step 1</span>
                   </div>
-
-                  <div className="flex flex-col items-center relative z-10">
-                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">
                       <Check className="h-4 w-4" />
                     </div>
                     <span className="text-xs mt-1 text-green-600 font-medium hidden sm:block">Upload Resume</span>
                     <span className="text-xs mt-1 text-green-600 font-medium sm:hidden">Step 2</span>
                   </div>
-
-                  <div className="flex flex-col items-center relative z-10">
-                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
                       3
                     </div>
                     <span className="text-xs mt-1 text-blue-600 font-medium hidden sm:block">Record Video</span>
@@ -182,70 +247,140 @@ const Step3: React.FC = () => {
                   </div>
                 </div>
 
-                <CardTitle className="text-xl font-bold text-center">Your Teleprompter Script</CardTitle>
-                <p className="text-gray-600 text-center mt-2 text-sm">
-                  Review and edit your AI-generated script before recording.
-                </p>
+                <CardTitle className="text-xl sm:text-2xl font-bold text-center">
+                  Record Your careercast Video
+                </CardTitle>
+                <div className="text-center text-gray-600 mt-2 text-sm sm:text-base">
+                  Job Title: <span className="font-semibold">{jobTitle}</span>
+                </div>
               </CardHeader>
 
               <CardContent>
-                <div className="space-y-6">
-                  {error && (
-                    <div className="bg-red-50 text-red-600 p-4 rounded-md text-sm">
-                      {error}
-                    </div>
-                  )}
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                    <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+                    <div className="text-red-700 text-sm">{error}</div>
+                  </div>
+                )}
 
-                  <div className="relative">
-                    <Textarea
-                      value={teleprompterText}
-                      onChange={handleTextChange}
-                      className="min-h-[300px] text-lg leading-relaxed p-6 font-medium resize-y"
-                      placeholder={isGenerating ? "Generating your script..." : "Your script will appear here..."}
-                      disabled={isGenerating}
-                    />
-                    {isGenerating && (
-                      <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                  {/* Left – Video */}
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center">
+                      <span className="mr-2">🎥</span> Video Recording
+                    </h3>
+
+                    <div className="bg-gray-100 rounded-lg p-4 sm:p-6 text-center mb-4 border border-gray-200">
+                      <div className="bg-gray-300 rounded-lg h-32 sm:h-48 flex items-center justify-center mb-4">
+                        <div>
+                          <div className="text-3xl sm:text-4xl mb-2">📷</div>
+                          <p className="text-gray-600 text-sm sm:text-base">Camera preview appears here</p>
+                        </div>
                       </div>
-                    )}
+
+                      <Button
+                        onClick={handleStartRecording}
+                        className="w-full text-sm sm:text-base"
+                        disabled={isGenerating || !teleprompterText}
+                      >
+                        <span className="mr-2">⏺️</span>
+                        {isGenerating ? "Generating Script..." : "Start Recording"}
+                      </Button>
+
+                      <p className="text-xs sm:text-sm text-gray-600 mt-3">
+                        Opens the recording studio with teleprompter
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row justify-between gap-4">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={generateIntroduction}
-                        disabled={isGenerating}
-                        className="flex items-center gap-2"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-                        Regenerate
-                      </Button>
-                      <div className="flex items-center gap-2 px-4 border rounded-md bg-gray-50">
-                        <span className="text-sm text-gray-600 whitespace-nowrap">Speed:</span>
-                        <input
-                          type="range"
-                          min="0.5"
-                          max="2"
-                          step="0.1"
-                          value={teleprompterSpeed}
-                          onChange={(e) => setTeleprompterSpeed(parseFloat(e.target.value))}
-                          className="w-24"
-                        />
-                        <span className="text-sm font-medium w-8">{teleprompterSpeed}x</span>
+                  {/* Right – Teleprompter */}
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center">
+                      <span className="mr-2">📜</span> Teleprompter
+                      {(isGenerating || isRewriting) && (
+                        <Loader2 className="h-4 w-4 ml-2 animate-spin text-blue-600" />
+                      )}
+                    </h3>
+
+                    <div className="bg-gray-900 text-white rounded-lg p-3 sm:p-4 h-48 sm:h-64 overflow-y-auto mb-4 font-mono text-xs sm:text-sm">
+                      {isGenerating || isRewriting ? (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center">
+                            <Loader2 className="h-6 sm:h-8 w-6 sm:w-8 animate-spin text-white mx-auto mb-2" />
+                            <p className="text-gray-300 text-xs sm:text-sm">
+                              {isRewriting
+                                ? "Rewriting your introduction..."
+                                : "Generating your personalized introduction..."}
+                            </p>
+                            <p className="text-gray-400 text-xs">
+                              Analyzing job and resume data
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap leading-relaxed text-gray-100">
+                          {teleprompterText}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Speed Control Slider */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Teleprompter Speed: {teleprompterSpeed.toFixed(1)}x
+                      </label>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value={teleprompterSpeed}
+                        onChange={(e) => setTeleprompterSpeed(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Slower</span>
+                        <span>Faster</span>
                       </div>
                     </div>
 
                     <Button
-                      onClick={handleStartRecording}
-                      className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
-                      disabled={isGenerating || !teleprompterText}
+                      variant="outline"
+                      onClick={() => generateIntroduction(true)}
+                      className="w-full text-sm sm:text-base"
+                      disabled={isRewriting || isGenerating}
                     >
-                      <Video className="h-4 w-4" />
-                      Start Recording
+                      {isRewriting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Rewriting...
+                        </>
+                      ) : (
+                        <>
+                          <span className="mr-2">🔄</span> Regenerate / Rewrite
+                        </>
+                      )}
                     </Button>
                   </div>
+                </div>
+
+                <div className="flex justify-between pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/step2")}
+                    disabled={isGenerating}
+                    className="text-sm sm:text-base"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleFinish}
+                    disabled={isGenerating || !teleprompterText}
+                    className="text-sm sm:text-base"
+                  >
+                    Finish & Save careercast
+                  </Button>
                 </div>
               </CardContent>
             </Card>
