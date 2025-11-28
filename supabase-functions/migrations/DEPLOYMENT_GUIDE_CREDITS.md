@@ -32,13 +32,14 @@
  */
 
 -- =====================================================
--- STEP 1.2: Set Default Credits to 3 (CRITICAL)
+-- STEP 1.2: Revert Default Credits (IMPORTANT)
 -- =====================================================
 
 /**
- * 1. Open `supabase-functions/migrations/set_default_credits_to_3.sql`
+ * We decided that credits should ONLY come from payments.
+ * 1. Open `supabase-functions/migrations/revert_default_credits.sql`
  * 2. Copy and paste the content into the SQL Editor and run it.
- *    (This ensures new users start with 3 credits automatically)
+ *    (This ensures we don't accidentally give double credits)
  */
  * 3. Click on "SQL Editor" in the left sidebar
  * 4. Click "New Query"

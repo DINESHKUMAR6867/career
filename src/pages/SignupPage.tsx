@@ -1706,6 +1706,57 @@ const SignupPage: React.FC = () => {
           console.error("❌ users_by_form attach user_id error:", attachError);
           // not fatal; just log
         }
+
+        // 🟢 NEW: Insert into payment_details to trigger credit grant
+        // First, ensure profile exists (in case trigger didn't fire yet)
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", userId)
+          .single();
+
+        if (!profileData) {
+          // Manually create profile if missing
+          await supabase.from("profiles").insert([
+            {
+              id: userId,
+              email,
+              plan_tier: "free",
+              plan_status: "active",
+              credits_remaining: 0, // Will be +3'd by trigger
+            },
+          ]);
+        }
+
+        // Now insert payment record
+        const nowIso = new Date().toISOString();
+        const { error: payError } = await supabase.from("payment_details").insert([
+          {
+            user_id: userId,
+            email,
+            amount,
+            currency,
+            amount_paid_usd: currency === "USD" ? amount : null,
+            status: "completed",
+            capture_status: "COMPLETED",
+            paypal_order_id: params.orderId,
+            paypal_capture_id: params.captureId,
+            transaction_id: params.captureId || params.orderId,
+            payment_mode: "paypal",
+            created_at: nowIso,
+            finished_at: nowIso,
+            metadata: {
+              plan: "initial_signup",
+              source: "signup_flow",
+            },
+          },
+        ]);
+
+        if (payError) {
+          console.error("❌ payment_details insert error:", payError);
+        } else {
+          console.log("✅ payment_details inserted, credits should be granted.");
+        }
       }
 
       // 2.4 Call Edge Function to send credentials email (best-effort)
@@ -1767,8 +1818,8 @@ const SignupPage: React.FC = () => {
     currency === "GBP"
       ? `£${amount.toFixed(2)}`
       : currency === "EUR"
-      ? `€${amount.toFixed(2)}`
-      : `$${amount.toFixed(2)}`;
+        ? `€${amount.toFixed(2)}`
+        : `$${amount.toFixed(2)}`;
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -1930,11 +1981,10 @@ const SignupPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loadingForm || !agreedToTerms}
-                  className={`w-full rounded-xl px-6 py-3 text-lg font-semibold text-white shadow-lg hover:scale-[1.01] transition-transform focus:ring-4 focus:ring-blue-300 disabled:opacity-70 disabled:cursor-not-allowed ${
-                    agreedToTerms
+                  className={`w-full rounded-xl px-6 py-3 text-lg font-semibold text-white shadow-lg hover:scale-[1.01] transition-transform focus:ring-4 focus:ring-blue-300 disabled:opacity-70 disabled:cursor-not-allowed ${agreedToTerms
                       ? "bg-gradient-to-r from-blue-800 to-purple-800 hover:from-blue-700 hover:to-purple-700"
                       : "bg-gradient-to-r from-blue-600 to-purple-600"
-                  }`}
+                    }`}
                 >
                   {loadingForm ? "Creating record..." : "Proceed to Payment"}
                 </button>
@@ -1976,19 +2026,19 @@ const SignupPage: React.FC = () => {
                         forceReRender={[amount, currency]}
                         createOrder={(_, actions) => {
                           return actions.order.create({
-                              purchase_units: [
-                                  {
-                                      amount: {
-                                          value: amount.toFixed(2),
-                                          currency_code: currency,
-                                      },
-                                      custom_id: formRow.id,
-                                  },
-                              ],
-                              application_context: {
-                                  shipping_preference: "NO_SHIPPING",
+                            purchase_units: [
+                              {
+                                amount: {
+                                  value: amount.toFixed(2),
+                                  currency_code: currency,
+                                },
+                                custom_id: formRow.id,
                               },
-                              intent: "CAPTURE"
+                            ],
+                            application_context: {
+                              shipping_preference: "NO_SHIPPING",
+                            },
+                            intent: "CAPTURE"
                           });
                         }}
                         onApprove={async (data, actions) => {
@@ -2017,7 +2067,7 @@ const SignupPage: React.FC = () => {
                             console.error("onApprove error:", err);
                             setPaymentError(
                               err?.message ||
-                                "Something went wrong while capturing payment."
+                              "Something went wrong while capturing payment."
                             );
                           } finally {
                             setPaymentLoading(false);
@@ -2026,10 +2076,9 @@ const SignupPage: React.FC = () => {
                         onError={(err) => {
                           console.error("PayPal onError:", err);
                           setPaymentError(
-                            `Payment could not be started. ${
-                              (err as any)?.message
-                                ? (err as any).message
-                                : "Please try again."
+                            `Payment could not be started. ${(err as any)?.message
+                              ? (err as any).message
+                              : "Please try again."
                             }`
                           );
                         }}
