@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   // New: Premium plan tracking
   const [isPremiumActive, setIsPremiumActive] = useState(false);
-  const [planRenewsAt, setPlanRenewsAt] = useState<string | null>(null);
+  const [credits, setCredits] = useState<number>(0);
 
   const handleLogout = () => navigate('/');
 
@@ -46,15 +46,10 @@ export default function Dashboard() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
         (payload) => {
-          const plan = payload.new.plan_tier;
-          const renewAt = payload.new.plan_renews_at;
-          const active =
-            plan === 'premium' &&
-            payload.new.plan_status === 'active' &&
-            renewAt &&
-            new Date(renewAt) > new Date();
+          const credits = payload.new.credits_remaining || 0;
+          const active = credits > 0;
           setIsPremiumActive(active);
-          setPlanRenewsAt(renewAt);
+          setCredits(credits);
         }
       )
       .subscribe();
@@ -70,20 +65,17 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('plan_tier, plan_status, plan_renews_at')
+        .select('plan_tier, plan_status, credits_remaining')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
 
-      const active =
-        data.plan_tier === 'premium' &&
-        data.plan_status === 'active' &&
-        data.plan_renews_at &&
-        new Date(data.plan_renews_at) > new Date();
+      const credits = data.credits_remaining || 0;
+      const active = credits > 0;
 
       setIsPremiumActive(active);
-      setPlanRenewsAt(data.plan_renews_at);
+      setCredits(credits);
     } catch (err) {
       console.error('Error fetching plan:', err);
       setIsPremiumActive(false);
@@ -209,9 +201,8 @@ export default function Dashboard() {
 
       {/* Sidebar */}
       <div
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-72 transform ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-72 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
         <Sidebar userEmail={user?.email || ''} onLogout={handleLogout} />
       </div>
@@ -242,13 +233,13 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto">
-                {isPremiumActive && planRenewsAt ? (
-                  <span className="text-white text-xs bg-red-500 px-2 py-1 rounded-md self-start sm:self-auto">
-                    Premium active until {new Date(planRenewsAt).toLocaleDateString()}
+                {isPremiumActive ? (
+                  <span className="text-white text-xs bg-emerald-500 px-2 py-1 rounded-md self-start sm:self-auto">
+                    Credits: {credits}
                   </span>
                 ) : (
                   <span className="text-white text-xs bg-red-500/30 px-2 py-1 rounded-md self-start sm:self-auto">
-                    Free Plan (3 recordings)
+                    No Credits (Top up needed)
                   </span>
                 )}
                 <button
@@ -338,11 +329,10 @@ export default function Dashboard() {
                                 <button
                                   onClick={() => both && handleViewDetails(cast.id)}
                                   disabled={!both}
-                                  className={`${
-                                    both
-                                      ? 'bg-[#01796F] hover:bg-[#016761] text-white'
-                                      : 'bg-gray-200 text-gray-400'
-                                  } px-3 py-1.5 rounded-md font-semibold text-xs`}
+                                  className={`${both
+                                    ? 'bg-[#01796F] hover:bg-[#016761] text-white'
+                                    : 'bg-gray-200 text-gray-400'
+                                    } px-3 py-1.5 rounded-md font-semibold text-xs`}
                                 >
                                   View
                                 </button>
@@ -355,7 +345,7 @@ export default function Dashboard() {
                               </div>
                             </td>
                           </tr>
-                          
+
                           {/* Mobile view */}
                           <tr key={`mobile-${cast.id}`} className="border-b border-gray-100 hover:bg-gray-50 md:hidden">
                             <td className="py-4 px-4" colSpan={6}>
@@ -369,7 +359,7 @@ export default function Dashboard() {
                                     {getBadge(cast.status)}
                                   </div>
                                 </div>
-                                
+
                                 <div className="flex gap-3 mt-1">
                                   {cast.resume_path ? (
                                     <a
@@ -378,7 +368,7 @@ export default function Dashboard() {
                                       rel="noreferrer"
                                       className="text-[#01796F] hover:text-[#016761] flex items-center gap-1 text-xs font-medium"
                                     >
-                                      <FileText className="w-4 h-4" /> 
+                                      <FileText className="w-4 h-4" />
                                       <span>Resume</span>
                                     </a>
                                   ) : (
@@ -387,7 +377,7 @@ export default function Dashboard() {
                                       <span>No resume</span>
                                     </span>
                                   )}
-                                  
+
                                   {video ? (
                                     <button
                                       onClick={() => setSelectedVideo(video)}
@@ -403,16 +393,15 @@ export default function Dashboard() {
                                     </span>
                                   )}
                                 </div>
-                                
+
                                 <div className="flex gap-2 mt-2">
                                   <button
                                     onClick={() => both && handleViewDetails(cast.id)}
                                     disabled={!both}
-                                    className={`flex-1 ${
-                                      both
-                                        ? 'bg-[#01796F] hover:bg-[#016761] text-white'
-                                        : 'bg-gray-100 text-gray-400'
-                                    } px-3 py-2 rounded-lg font-medium text-sm transition-colors`}
+                                    className={`flex-1 ${both
+                                      ? 'bg-[#01796F] hover:bg-[#016761] text-white'
+                                      : 'bg-gray-100 text-gray-400'
+                                      } px-3 py-2 rounded-lg font-medium text-sm transition-colors`}
                                   >
                                     View Details
                                   </button>

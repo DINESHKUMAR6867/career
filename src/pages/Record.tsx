@@ -962,9 +962,18 @@ const Record: React.FC = () => {
       showToast("Recording uploaded successfully!", "success");
       localStorage.setItem("recordedVideoUrl", publicUrl || "");
 
-      // Refresh credits count
-      if (creditsRemaining !== null) {
-        setCreditsRemaining(creditsRemaining - 1);
+      // 🔹 Decrement credits
+      if (creditsRemaining !== null && creditsRemaining > 0) {
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits_remaining: creditsRemaining - 1 })
+          .eq('id', user.id);
+
+        if (creditError) {
+          console.error("Error decrementing credits:", creditError);
+        } else {
+          setCreditsRemaining(creditsRemaining - 1);
+        }
       }
 
       navigate(`/final-result/${jobRequestId}`);

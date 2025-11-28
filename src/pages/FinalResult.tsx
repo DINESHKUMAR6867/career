@@ -52,12 +52,12 @@ const FinalResult: React.FC = () => {
         // Check if this is an external visitor (no user but has castId)
         const isExternal = !user && castId;
         setIsExternalVisitor(!!isExternal);
-        
-        if (isExternal) {
-          // Load data from Supabase for external visitors
-          await loadExternalData(castId!);
+
+        if (castId) {
+          // If we have a specific castId (from URL), load that specific record
+          await loadExternalData(castId);
         } else {
-          // Load data from localStorage for authenticated users
+          // Otherwise load from localStorage (fallback for legacy or incomplete flows)
           await loadLocalData();
         }
       } catch (error) {
@@ -66,7 +66,7 @@ const FinalResult: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     loadData();
   }, [user, castId]);
 
@@ -100,10 +100,10 @@ const FinalResult: React.FC = () => {
         if (!error && data) {
           setJobTitle(data.job_title || jobTitle || "");
           setResumeUrl(data.resume_path || uploadedResumeUrl);
-          setResumeFileName(fileName || data.resume_path ? 
-            data.resume_path.split('/').pop() || "Resume.pdf" : 
+          setResumeFileName(fileName || data.resume_path ?
+            data.resume_path.split('/').pop() || "Resume.pdf" :
             "Resume.pdf");
-          
+
           // Get video URL from recordings
           let finalVideoUrl = null;
           if (data.recordings && data.recordings.length > 0) {
@@ -120,7 +120,7 @@ const FinalResult: React.FC = () => {
             finalVideoUrl = recordedVideoUrl || null;
           }
 
-          
+
           // Ensure the video URL is properly formatted
           if (finalVideoUrl && !finalVideoUrl.startsWith('http')) {
             // If it's a relative path, construct the full URL
@@ -131,18 +131,18 @@ const FinalResult: React.FC = () => {
               // Fallback to the original URL
             }
           }
-          
+
           setVideoUrl(finalVideoUrl);
-          
+
           console.log("Set state values:", {
             jobTitle: data.job_title || jobTitle || "",
             resumeUrl: data.resume_path || uploadedResumeUrl,
-            resumeFileName: fileName || data.resume_path ? 
-              data.resume_path.split('/').pop() || "Resume.pdf" : 
+            resumeFileName: fileName || data.resume_path ?
+              data.resume_path.split('/').pop() || "Resume.pdf" :
               "Resume.pdf",
             videoUrl: finalVideoUrl
           });
-          
+
           return;
         } else {
           console.error("Supabase error or no data:", error);
@@ -202,10 +202,10 @@ const FinalResult: React.FC = () => {
       if (data) {
         setJobTitle(data.job_title || "");
         setResumeUrl(data.resume_path || null);
-        setResumeFileName(data.resume_path ? 
-          data.resume_path.split('/').pop() || "Resume.pdf" : 
+        setResumeFileName(data.resume_path ?
+          data.resume_path.split('/').pop() || "Resume.pdf" :
           "Resume.pdf");
-        
+
         // Get video URL from recordings
         let finalVideoUrl = null;
         if (data.recordings && data.recordings.length > 0) {
@@ -220,14 +220,14 @@ const FinalResult: React.FC = () => {
           }
         }
 
-        
+
         setVideoUrl(finalVideoUrl);
-        
+
         console.log("Set external state values:", {
           jobTitle: data.job_title || "",
           resumeUrl: data.resume_path || null,
-          resumeFileName: data.resume_path ? 
-            data.resume_path.split('/').pop() || "Resume.pdf" : 
+          resumeFileName: data.resume_path ?
+            data.resume_path.split('/').pop() || "Resume.pdf" :
             "Resume.pdf",
           videoUrl: finalVideoUrl
         });
@@ -244,7 +244,7 @@ const FinalResult: React.FC = () => {
       showToast("No recorded video found for this profile.", "warning");
       return;
     }
-    
+
     // Test if the video URL is accessible
     fetch(videoUrl, { method: 'HEAD' })
       .then(response => {
@@ -286,11 +286,11 @@ const FinalResult: React.FC = () => {
         // If direct fetch fails, try with credentials
         response = await fetch(resumeUrl, { credentials: 'include' });
       }
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
       }
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       const firstPage = pdfDoc.getPages()[0];
@@ -299,7 +299,7 @@ const FinalResult: React.FC = () => {
       // Embed the play button image
       const buttonImageUrl = `${baseUrl}/images/play_video_button.png`;
       console.log("🖼️ Loading play button image from:", buttonImageUrl);
-      
+
       let buttonImageResponse;
       try {
         buttonImageResponse = await fetch(buttonImageUrl);
@@ -307,14 +307,14 @@ const FinalResult: React.FC = () => {
         // Try with credentials if direct fetch fails
         buttonImageResponse = await fetch(buttonImageUrl, { credentials: 'include' });
       }
-      
+
       if (!buttonImageResponse.ok) {
         throw new Error(`Button image not found at ${buttonImageUrl}, received status: ${buttonImageResponse.status}`);
       }
-      
+
       const imageBytes = await buttonImageResponse.arrayBuffer();
       let buttonImage;
-      
+
       // Check if it's a PNG or JPG
       if (buttonImageUrl.endsWith('.png')) {
         buttonImage = await pdfDoc.embedPng(imageBytes);
@@ -389,23 +389,23 @@ const FinalResult: React.FC = () => {
 
       // ✅ Generate filename based on first name
       const firstName =
-  localStorage.getItem("first_name") ||
-  ((user as any)?.user_metadata?.full_name?.split(" ")[0]) ||
-  "user";
+        localStorage.getItem("first_name") ||
+        ((user as any)?.user_metadata?.full_name?.split(" ")[0]) ||
+        "user";
 
 
       const cleanFirstName = firstName.trim().replace(/\s+/g, "_").toLowerCase();
       const finalFileName = `${cleanFirstName}_careercast_resume.pdf`;
 
       console.log("Downloading file:", { enhancedUrl, finalFileName });
-      
+
       const a = document.createElement("a");
       a.href = enhancedUrl;
       a.download = finalFileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
+
       // Clean up the URL object
       setTimeout(() => URL.revokeObjectURL(enhancedUrl), 1000);
     } catch (err: any) {
@@ -437,10 +437,10 @@ const FinalResult: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Debug info */}
       <div className="fixed top-0 left-0 bg-black text-white text-xs p-2 z-50">
-        resumeUrl: {resumeUrl ? 'YES' : 'NO'}, videoUrl: {videoUrl ? 'YES' : 'NO'}, 
+        resumeUrl: {resumeUrl ? 'YES' : 'NO'}, videoUrl: {videoUrl ? 'YES' : 'NO'},
         isExternalVisitor: {isExternalVisitor ? 'YES' : 'NO'}, user: {user ? 'YES' : 'NO'}
       </div>
-      
+
       {/* ===== Header Section ===== */}
       <header className="fixed top-0 left-0 right-0 bg-white border-b shadow-sm z-50">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center px-4 py-3 gap-3">
@@ -468,7 +468,7 @@ const FinalResult: React.FC = () => {
                 <Download className="h-4 w-4" />
                 Download Enhanced Resume
               </Button>
-              
+
               {/* Copy careercast Link Button */}
               <Button
                 variant="outline"
@@ -477,14 +477,14 @@ const FinalResult: React.FC = () => {
                   const baseUrl = window.location.origin;
                   // Use castId if available (for shared links), otherwise use the current job request ID
                   const currentCastId = castId || localStorage.getItem("current_job_request_id");
-                  
+
                   if (!currentCastId) {
                     showToast('Unable to generate shareable link. No careercast ID found.', 'error');
                     return;
                   }
-                  
+
                   const shareableLink = `${baseUrl}/final-result/${currentCastId}`;
-                  
+
                   navigator.clipboard.writeText(shareableLink).then(() => {
                     showToast('careercast link copied to clipboard!', 'success');
                   }).catch(err => {
@@ -524,8 +524,8 @@ const FinalResult: React.FC = () => {
 
       {/* ===== Resume Display Section ===== */}
       <div className="pt-20 pb-0 px-2">
-        <div 
-          className="max-w-5xl mx-auto border-none shadow-none overflow-hidden flex flex-col" 
+        <div
+          className="max-w-5xl mx-auto border-none shadow-none overflow-hidden flex flex-col"
           style={{ height: "calc(100vh - 140px)" }}
         >
           {/* {isExternalVisitor && (
@@ -543,13 +543,13 @@ const FinalResult: React.FC = () => {
               </p>
             </div>
           )} */}
-          
+
           {resumeUrl ? (
             <iframe
               src={`${resumeUrl}#zoom=100&view=FitH`}
               title="Resume Preview"
               className="w-full h-full border-0 rounded-lg"
-              style={{ 
+              style={{
                 height: "calc(100vh - 140px)",
                 transform: 'scale(1)',
                 transformOrigin: '0 0'

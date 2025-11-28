@@ -97,9 +97,9 @@ const Step2: React.FC = () => {
       const fileExt = selectedFile.name.split(".").pop()?.toLowerCase();
 
       const firstName =
-  localStorage.getItem("first_name") ||
-  (user && (user as any)?.user_metadata?.full_name?.split(" ")[0]) ||
-  "user";
+        localStorage.getItem("first_name") ||
+        (user && (user as any)?.user_metadata?.full_name?.split(" ")[0]) ||
+        "user";
 
 
       const cleanFirstName = firstName.trim().replace(/\s+/g, "_").toLowerCase();
@@ -148,6 +148,8 @@ const Step2: React.FC = () => {
       localStorage.setItem("uploadedResumeUrl", publicUrl || "");
       localStorage.setItem("resumeFileName", fileName);
       localStorage.setItem("resumeFullText", extractedText);
+      // Clear previous teleprompter text to force regeneration with new resume
+      localStorage.removeItem("teleprompterText");
 
       // 🔹 Update Supabase
       const { error: updateError } = await supabase
@@ -182,17 +184,16 @@ const Step2: React.FC = () => {
     <div className="min-h-screen bg-white flex">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
 
       {/* Sidebar */}
-      <div 
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-72 transform ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
+      <div
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-72 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
         <Sidebar userEmail={user?.email || ''} onLogout={handleLogout} />
       </div>
@@ -254,9 +255,8 @@ const Step2: React.FC = () => {
               <CardContent>
                 <form onSubmit={handleSubmit}>
                   <div
-                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                      isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400"
-                    } ${!selectedFile ? "min-h-[150px] flex items-center justify-center" : "min-h-[80px] flex items-center justify-center bg-green-50 border-green-200"}`}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400"
+                      } ${!selectedFile ? "min-h-[150px] flex items-center justify-center" : "min-h-[80px] flex items-center justify-center bg-green-50 border-green-200"}`}
                     onClick={() => fileInputRef.current?.click()}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
